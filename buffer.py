@@ -4,12 +4,15 @@ Author: sc-1123
 This project will put in the North Pole!
 """
 
-from click import group, argument, option, echo
+from click import group, argument, echo, STRING
 from flask import Flask, request
-from werkzeug.serving import run_simple
+from werkzeug.serving import run_simple as run
 from requests import get
+from requests.exceptions import ConnectionError
 from re import compile as regex
 from os import system
+from sys import platform
+from getpass import getpass
 
 
 def _shutdown_server():
@@ -23,7 +26,7 @@ def _get_ip():
     return ip_regex.search(ip_page.text).group()
 
 
-def _pack_command(command: str):
+def _pack_command(command: str) -> str:
     packed = ''
     for char in command:
         packed += str(ord(char))
@@ -31,11 +34,10 @@ def _pack_command(command: str):
     return packed
 
 
-def _unpack_command(command: str):
+def _unpack_command(command: str) -> str:
     unpacked = ''
     for char in command.split():
-        unpacked += str(ord(char))
-        unpacked += '&20'
+        unpacked += chr(int(char))
     return unpacked
 
 
@@ -45,14 +47,15 @@ def commands():
 
 
 @commands.command()
-@option('--password', '-p')
-def run_command_collector(password):
+def run_command_collector():
     """Collects commands from other computers, enter password for secure."""
+    password = getpass('Password: ')
     collector = Flask(__name__)
+    platforms = {'win32': 'Windows', 'darwin': 'Mac', 'linux': 'Linux'}
 
     @collector.route('/')
     def main_page():
-        return f'Airexec command collector running on {_get_ip()}.'
+        return f'Airexec command collector running on {platforms[platform]}.'
 
     @collector.route('/<pwd>/<command>')
     def exec_command(pwd, command):
@@ -71,4 +74,15 @@ def run_command_collector(password):
         else:
             return 'Invalid password.'
 
-    run_simple('0.0.0.0', 23333, collector)
+    echo(f'Host: {_get_ip()}')
+    run('0.0.0.0', 23333, collector)
+
+
+@commands.command()
+@argument('ip', type=STRING)
+def connect(ip: str):
+    """Execute commands on the other computer via an activated command collector. Password required."""
+    try:
+
+    password = getpass('Password: ')
+
