@@ -10,8 +10,8 @@ from werkzeug.serving import run_simple as run
 from requests import get
 from requests.exceptions import ConnectionError
 from re import compile as regex
-from os import system
-from sys import platform
+from os import popen
+from sys import platform, stderr
 from getpass import getpass
 
 
@@ -61,8 +61,8 @@ def run_command_collector():
     def exec_command(pwd, command):
         if pwd == password:
             unpacked_command = _unpack_command(command)
-            system(unpacked_command)
-            return f'ran "{unpacked_command}"'
+            cmd = popen(unpacked_command)
+            return cmd.read()
         else:
             return 'Invalid password.'
 
@@ -82,7 +82,22 @@ def run_command_collector():
 @argument('ip', type=STRING)
 def connect(ip: str):
     """Execute commands on the other computer via an activated command collector. Password required."""
+
+    server = f'http://{ip}:23333'
     try:
+        r = get(server)
+    except ConnectionError:
+        echo('Invalid ip.', file=stderr)
+    else:
+        prompt = f'{r.text.split()[-1][:-1]} >'
 
-    password = getpass('Password: ')
-
+        password = getpass('Password: ')
+        cur = 1
+        echo('Enter ":exit" to quit.')
+        while cur != ':exit':
+            cur = input(prompt)
+            r = get(server + f'/{password}/{_pack_command(cur)}')
+            echo(r.text)
+        echo('Airexec client terminated.')
+        if input('Terminate the command collector?(y/n):') == 'y':
+            get(server + f'/{password}/terminate')
