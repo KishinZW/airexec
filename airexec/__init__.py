@@ -1,40 +1,6 @@
 """
 A tool executes commands on another computer, like ssh.
 Author: sc-1123
-This project will put in the North Pole!
-"""
-
-from click import group, argument, echo, STRING
-from flask import Flask, request
-from werkzeug.serving import run_simple as run
-from requests import get
-from requests.exceptions import ConnectionError
-from re import compile as regex
-from os import popen
-from sys import platform, stderr
-from getpass import getpass
-
-
-def _shutdown_server():
-    func = request.environ.get('werkzeug.server.shutdown')
-    func()
-
-
-def _get_ip():
-    ip_regex = regex(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
-    ip_page = get('http://ip.cn')
-    return ip_regex.search(ip_page.text).group()
-
-
-def _pack_command(command: str) -> str:
-    packed = ''
-    for char in command:
-        packed += str(ord(char))
-        packed += '%20'
-    return packed
-"""
-A tool executes commands on another computer, like ssh.
-Author: sc-1123
 """
 
 from click import group, argument, echo, password_option, STRING
